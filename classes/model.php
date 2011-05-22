@@ -202,6 +202,122 @@ class Model extends \Orm\Model {
 		return $this;
 	}
 
+	// -----------------------------------------------------------------
+
+	/**
+	 * create a new tree node as first child of object
+	 *
+	 * @param	object	Nestedsets\Model
+	 * @return	mixed
+	 */
+	public function tree_new_first_child_of(\Nestedsets\Model $object)
+	{
+		$this->tree_validate_model($object, __METHOD__);
+
+		// set the tree id
+		if ( ! is_null($this->configuration['tree_field']))
+		{
+			$this->{$this->configuration['tree_field']} = $object->tree_get_tree_id();
+		}
+
+		// set the left- and right pointers for the new node
+		$this->{$this->configuration['left_field']} = $object->{$this->configuration['left_field']} + 1;
+		$this->{$this->configuration['right_field']} = $object->{$this->configuration['left_field']} + 2;
+
+		// create room for this new node
+		$this->_tree_shift_rlvalues($this->{$this->configuration['left_field']}, 2);
+
+		// insert the new node and return the result
+		return $this->save();
+	}
+
+	// -----------------------------------------------------------------
+
+	/**
+	 * create a new tree node as last child of object
+	 *
+	 * @param	object	Nestedsets\Model
+	 * @return	mixed
+	 */
+	public function tree_new_last_child_of(\Nestedsets\Model $object)
+	{
+		$this->tree_validate_model($object, __METHOD__);
+
+		// set the tree id
+		if ( ! is_null($this->configuration['tree_field']))
+		{
+			$this->{$this->configuration['tree_field']} = $object->tree_get_tree_id();
+		}
+
+		// set the left- and right pointers for the new node
+		$this->{$this->configuration['left_field']} = $object->{$this->configuration['right_field']};
+		$this->{$this->configuration['right_field']} = $object->{$this->configuration['right_field']} + 1;
+
+		// create room for this new node
+		$this->_tree_shift_rlvalues($this->{$this->configuration['left_field']}, 2);
+
+		// insert the new node and return the result
+		return $this->save();
+	}
+
+	// -----------------------------------------------------------------
+
+	/**
+	 * create a new tree node as new next sibling of object
+	 *
+	 * @param	object	Nestedsets\Model
+	 * @return	mixed
+	 */
+	public function tree_new_next_sibling_of(\Nestedsets\Model $object)
+	{
+		$this->tree_validate_model($object, __METHOD__);
+
+		// set the tree id
+		if ( ! is_null($this->configuration['tree_field']))
+		{
+			$this->{$this->configuration['tree_field']} = $object->tree_get_tree_id();
+		}
+
+		// set the left- and right pointers for the new node
+		$this->{$this->configuration['left_field']} = $object->{$this->configuration['left_field']};
+		$this->{$this->configuration['right_field']} = $object->{$this->configuration['left_field']} + 1;
+
+		// create room for this new node
+		$this->_tree_shift_rlvalues($this->{$this->configuration['left_field']}, 2);
+
+		// insert the new node and return the result
+		return $this->save();
+	}
+
+	// -----------------------------------------------------------------
+
+	/**
+	 * create a new tree node as new previous sibling of object
+	 *
+	 * @param	object	Nestedsets\Model
+	 * @return	mixed
+	 */
+	public function tree_new_previous_sibling_of(\Nestedsets\Model $object)
+	{
+		$this->tree_validate_model($object, __METHOD__);
+
+		// set the tree id
+		if ( ! is_null($this->configuration['tree_field']))
+		{
+			$this->{$this->configuration['tree_field']} = $object->tree_get_tree_id();
+		}
+
+		// set the left- and right pointers for the new node
+		$this->{$this->configuration['left_field']} = $object->{$this->configuration['right_field']} + 1;
+		$this->{$this->configuration['right_field']} = $object->{$this->configuration['right_field']} + 2;
+
+		// create room for this new node
+		$this->_tree_shift_rlvalues($this->{$this->configuration['left_field']}, 2);
+
+		// insert the new node and return the result
+		return $this->save();
+	}
+
 	/* -------------------------------------------------------------------------
 	 * tree queries
 	 * ---------------------------------------------------------------------- */
@@ -234,7 +350,7 @@ class Model extends \Orm\Model {
 	 */
 	public function tree_get_parent(\Nestedsets\Model $object)
 	{
-		$this->validate_model($object, __METHOD__);
+		$this->tree_validate_model($object, __METHOD__);
 
 		$query = static::find()
 			->where($this->configuration['left_field'], '<', $object->{$this->configuration['left_field']})
@@ -260,7 +376,7 @@ class Model extends \Orm\Model {
 	 */
 	public function tree_get_first_child(\Nestedsets\Model $object)
 	{
-		$this->validate_model($object, __METHOD__);
+		$this->tree_validate_model($object, __METHOD__);
 
 		$query = static::find()
 			->where($this->configuration['left_field'], $object->{$this->configuration['left_field']} + 1);
@@ -284,7 +400,7 @@ class Model extends \Orm\Model {
 	 */
 	public function tree_get_last_child(\Nestedsets\Model $object)
 	{
-		$this->validate_model($object, __METHOD__);
+		$this->tree_validate_model($object, __METHOD__);
 
 		$query = static::find()
 			->where($this->configuration['right_field'], $object->{$this->configuration['right_field']} - 1);
@@ -308,7 +424,7 @@ class Model extends \Orm\Model {
 	 */
 	public function tree_get_previous_sibling(\Nestedsets\Model $object)
 	{
-		$this->validate_model($object, __METHOD__);
+		$this->tree_validate_model($object, __METHOD__);
 
 		$query = static::find()
 			->where($this->configuration['right_field'], $object->{$this->configuration['left_field']} - 1);
@@ -332,7 +448,7 @@ class Model extends \Orm\Model {
 	 */
 	public function tree_get_next_sibling(\Nestedsets\Model $object)
 	{
-		$this->validate_model($object, __METHOD__);
+		$this->tree_validate_model($object, __METHOD__);
 
 		$query = static::find()
 			->where($this->configuration['left_field'], $object->{$this->configuration['right_field']} + 1);
@@ -560,7 +676,7 @@ class Model extends \Orm\Model {
 	 */
 	public function tree_make_next_sibling_of(\Nestedsets\Model $to)
 	{
-		$this->validate_model($to, __METHOD__);
+		$this->tree_validate_model($to, __METHOD__);
 
 		if ($this->tree_is_valid($this) and $this->tree_is_valid($to))
 		{
@@ -590,7 +706,7 @@ class Model extends \Orm\Model {
 	 */
 	public function tree_make_previous_sibling_of(\Nestedsets\Model $to)
 	{
-		$this->validate_model($to, __METHOD__);
+		$this->tree_validate_model($to, __METHOD__);
 
 		if ($this->tree_is_valid($this) and $this->tree_is_valid($to))
 		{
@@ -620,7 +736,7 @@ class Model extends \Orm\Model {
 	 */
 	public function tree_make_first_child_of(\Nestedsets\Model $to)
 	{
-		$this->validate_model($to, __METHOD__);
+		$this->tree_validate_model($to, __METHOD__);
 
 		if ($this->tree_is_valid($this) and $this->tree_is_valid($to))
 		{
@@ -650,7 +766,7 @@ class Model extends \Orm\Model {
 	 */
 	public function tree_make_last_child_of(\Nestedsets\Model $to)
 	{
-		$this->validate_model($to, __METHOD__);
+		$this->tree_validate_model($to, __METHOD__);
 
 		if ($this->tree_is_valid($this) and $this->tree_is_valid($to))
 		{
@@ -736,7 +852,7 @@ class Model extends \Orm\Model {
 		if ( ! is_null($field))
 		{
 			// fetch the tree into an array
-			$result = $this->_tree_dump_as('array', array($field), $skip_root);
+			$result = $this->_tree_dump_as('array', array('id', $field), $skip_root);
 
 			// storage for the dropdown tree
 			$tree = array();
@@ -745,6 +861,44 @@ class Model extends \Orm\Model {
 			foreach ($result as $key => $value)
 			{
 				$tree[$value['_key_']] = str_repeat('&nbsp;', ($value['_level_']) * 3) . ($value['_level_'] ? '&raquo; ' : '') . $value[$field];
+			}
+
+			// return the result
+			return $tree;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	// -----------------------------------------------------------------
+
+	/**
+	 * returns the tree with only parents in a key-value format suitable for html dropdowns
+	 *
+	 */
+	public function tree_dump_parent_dropdown($field = null, $skip_root = false)
+	{
+		// set the name field
+		empty($field) and $field = $this->configuration['title_field'];
+
+		// we need a name field to generate the tree
+		if ( ! is_null($field))
+		{
+			// fetch the tree into an array
+			$result = $this->_tree_dump_as('array', array('id', $field), $skip_root);
+
+			// storage for the dropdown tree
+			$tree = array();
+
+			// loop trough the tree
+			foreach ($result as $key => $value)
+			{
+				if ($value[$this->tree_get_property('right_field')] - $value[$this->tree_get_property('left_field')] > 1)
+				{
+					$tree[$value['_key_']] = str_repeat('&nbsp;', ($value['_level_']) * 3) . ($value['_level_'] ? '&raquo; ' : '') . $value[$field];
+				}
 			}
 
 			// return the result
@@ -804,7 +958,7 @@ class Model extends \Orm\Model {
 	 * @param   mixed	type depends on the field type of the tree_field
 	 * @return  object	this object, for chaining
 	 */
-	private function tree_get_tree_id()
+	public function tree_get_tree_id()
 	{
 		// check if the current object is part of a tree
 		if ( ! empty($this->{$this->configuration['tree_field']}))
@@ -1012,6 +1166,7 @@ class Model extends \Orm\Model {
 
 	private function _tree_shift_rlvalues($first, $delta)
 	{
+		// update the left side pointers
 		$query = static::find();
 
 		// if we have multiple roots
@@ -1027,6 +1182,26 @@ class Model extends \Orm\Model {
 		foreach($result as $key => $record)
 		{
 			$record->{$this->configuration['left_field']} += $delta;
+
+			// and save the record
+			$record->save();
+		}
+
+		// update the right side pointers
+		$query = static::find();
+
+		// if we have multiple roots
+		if ( ! is_null($this->configuration['tree_field']))
+		{
+			$query->where($this->configuration['tree_field'], $this->tree_get_tree_id());
+		}
+
+		// select the range
+		$result = $query->where($this->configuration['right_field'], '>=', $first)->get();
+
+		// update the left- and right pointers
+		foreach($result as $key => $record)
+		{
 			$record->{$this->configuration['right_field']} += $delta;
 
 			// and save the record
@@ -1066,6 +1241,13 @@ class Model extends \Orm\Model {
 
 	private function _tree_move_subtree($destination_id)
 	{
+		// catch a recursive move
+		if ( $destination_id >= $this->{$this->configuration['left_field']} and $destination_id <= $this->{$this->configuration['right_field']} )
+		{
+			// recursive moves would make no change to the tree
+			return $this;
+		}
+
 		// determine the size of the tree to move
 		$treesize = $this->{$this->configuration['right_field']} - $this->{$this->configuration['left_field']} + 1;
 

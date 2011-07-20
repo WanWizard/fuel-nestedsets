@@ -1,7 +1,7 @@
 Nested Sets
 ===========
 
-Adds methods to a Datamapper ORM object to work with nested tree database structures.
+Adds methods to the Fuel ORM model to work with nested tree database structures.
 
 Introduction to nested sets
 ---------------------------

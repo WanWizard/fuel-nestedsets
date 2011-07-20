@@ -329,7 +329,7 @@ class Model extends \Orm\Model {
 	 */
 	public function tree_get_root()
 	{
-		$query = static::find()->where($this->configuration['left_field'], 1);
+		$query = $this->find()->where($this->configuration['left_field'], 1);
 
 		if ( ! is_null($this->configuration['tree_field']))
 		{
@@ -352,7 +352,7 @@ class Model extends \Orm\Model {
 	{
 		$this->tree_validate_model($object, __METHOD__);
 
-		$query = static::find()
+		$query = $this->find()
 			->where($this->configuration['left_field'], '<', $object->{$this->configuration['left_field']})
 			->where($this->configuration['right_field'], '>', $object->{$this->configuration['right_field']})
 			->order_by($this->configuration['right_field'], 'ASC');
@@ -378,7 +378,7 @@ class Model extends \Orm\Model {
 	{
 		$this->tree_validate_model($object, __METHOD__);
 
-		$query = static::find()
+		$query = $this->find()
 			->where($this->configuration['left_field'], $object->{$this->configuration['left_field']} + 1);
 
 		if ( ! is_null($this->configuration['tree_field']))
@@ -402,7 +402,7 @@ class Model extends \Orm\Model {
 	{
 		$this->tree_validate_model($object, __METHOD__);
 
-		$query = static::find()
+		$query = $this->find()
 			->where($this->configuration['right_field'], $object->{$this->configuration['right_field']} - 1);
 
 		if ( ! is_null($this->configuration['tree_field']))
@@ -426,7 +426,7 @@ class Model extends \Orm\Model {
 	{
 		$this->tree_validate_model($object, __METHOD__);
 
-		$query = static::find()
+		$query = $this->find()
 			->where($this->configuration['right_field'], $object->{$this->configuration['left_field']} - 1);
 
 		if ( ! is_null($this->configuration['tree_field']))
@@ -450,7 +450,7 @@ class Model extends \Orm\Model {
 	{
 		$this->tree_validate_model($object, __METHOD__);
 
-		$query = static::find()
+		$query = $this->find()
 			->where($this->configuration['left_field'], $object->{$this->configuration['right_field']} + 1);
 
 		if ( ! is_null($this->configuration['tree_field']))
@@ -645,7 +645,7 @@ class Model extends \Orm\Model {
 	{
 		if ($this->tree_is_valid($this))
 		{
-			$query = static::find();
+			$query = $this->find();
 
 			if ( ! is_null($this->configuration['tree_field']))
 			{
@@ -798,7 +798,7 @@ class Model extends \Orm\Model {
 	 */
 	public function tree_delete_tree($all = false)
 	{
-		$query = static::find();
+		$query = $this->find();
 
 		// if we have multiple roots
 		if ( ! is_null($this->configuration['tree_field']))
@@ -985,7 +985,7 @@ class Model extends \Orm\Model {
 	{
 		if ($this->tree_is_valid($this))
 		{
-			$query = static::find();
+			$query = $this->find();
 
 			// if we have multiple roots
 			if ( ! is_null($this->configuration['tree_field']))
@@ -1167,7 +1167,7 @@ class Model extends \Orm\Model {
 	private function _tree_shift_rlvalues($first, $delta)
 	{
 		// update the left side pointers
-		$query = static::find();
+		$query = $this->find();
 
 		// if we have multiple roots
 		if ( ! is_null($this->configuration['tree_field']))
@@ -1188,7 +1188,7 @@ class Model extends \Orm\Model {
 		}
 
 		// update the right side pointers
-		$query = static::find();
+		$query = $this->find();
 
 		// if we have multiple roots
 		if ( ! is_null($this->configuration['tree_field']))
@@ -1213,7 +1213,7 @@ class Model extends \Orm\Model {
 
 	private function _tree_shift_rlrange($first, $last, $delta)
 	{
-		$query = static::find();
+		$query = $this->find();
 
 		// if we have multiple roots
 		if ( ! is_null($this->configuration['tree_field']))

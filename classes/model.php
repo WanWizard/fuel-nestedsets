@@ -98,7 +98,7 @@ class Model extends \Orm\Model {
 
 		if (count(static::$_primary_key) > 1)
 		{
-			throw new \Exception('The NestedSets doesn\'t support ORM Models with multiple primary key columns.');
+			throw new \Exception('The NestedSets model doesn\'t support ORM Models with multiple primary key columns.');
 		}
 	}
 
@@ -348,8 +348,10 @@ class Model extends \Orm\Model {
 	 * @param	object	Nestedsets\Model
 	 * @return	object	Nestedsets\Model
 	 */
-	public function tree_get_parent(\Nestedsets\Model $object)
+	public function tree_get_parent(\Nestedsets\Model $object = null)
 	{
+		is_null($object) and $object = $this;
+
 		$this->tree_validate_model($object, __METHOD__);
 
 		$query = $this->find()
@@ -374,8 +376,10 @@ class Model extends \Orm\Model {
 	 * @param	object	Nestedsets\Model
 	 * @return	object	Nestedsets\Model
 	 */
-	public function tree_get_first_child(\Nestedsets\Model $object)
+	public function tree_get_first_child(\Nestedsets\Model $object = null)
 	{
+		is_null($object) and $object = $this;
+
 		$this->tree_validate_model($object, __METHOD__);
 
 		$query = $this->find()
@@ -398,8 +402,10 @@ class Model extends \Orm\Model {
 	 * @param   object Nestedsets\Model
 	 * @return	object	Nestedsets\Model
 	 */
-	public function tree_get_last_child(\Nestedsets\Model $object)
+	public function tree_get_last_child(\Nestedsets\Model $object = null)
 	{
+		is_null($object) and $object = $this;
+
 		$this->tree_validate_model($object, __METHOD__);
 
 		$query = $this->find()
@@ -417,13 +423,44 @@ class Model extends \Orm\Model {
 	// -----------------------------------------------------------------
 
 	/**
+	 * returns the children of the 'object' passed
+	 *
+	 * @param   object Nestedsets\Model
+	 * @return	object	Nestedsets\Model
+	 */
+	public function tree_get_children(\Nestedsets\Model $object = null)
+	{
+		is_null($object) and $object = $this;
+
+		if ($child = $object->tree_get_first_child())
+		{
+			$result = array($child->id => $child);
+			while ($child = $child->tree_get_next_sibling())
+			{
+				$result[$child->id] = $child;
+			}
+
+			// return the array of Nestedsets Model objects
+			return $result;
+		}
+		else
+		{
+			return null;
+		}
+	}
+
+	// -----------------------------------------------------------------
+
+	/**
 	 * returns the previous sibling of the 'object' passed
 	 *
 	 * @param   object Nestedsets\Model
 	 * @return	object	Nestedsets\Model
 	 */
-	public function tree_get_previous_sibling(\Nestedsets\Model $object)
+	public function tree_get_previous_sibling(\Nestedsets\Model $object = null)
 	{
+		is_null($object) and $object = $this;
+
 		$this->tree_validate_model($object, __METHOD__);
 
 		$query = $this->find()
@@ -446,8 +483,10 @@ class Model extends \Orm\Model {
 	 * @param   object Nestedsets\Model
 	 * @return	object	Nestedsets\Model
 	 */
-	public function tree_get_next_sibling(\Nestedsets\Model $object)
+	public function tree_get_next_sibling(\Nestedsets\Model $object = null)
 	{
+		is_null($object) and $object = $this;
+
 		$this->tree_validate_model($object, __METHOD__);
 
 		$query = $this->find()
@@ -461,6 +500,33 @@ class Model extends \Orm\Model {
 		// return the Nestedsets Model object
 		return $query->get_one();
 	}
+
+	// -----------------------------------------------------------------
+
+	/**
+	 * returns the siblings (includes the node itself!) of the 'object' passed
+	 *
+	 * @param   object Nestedsets\Model
+	 * @return	object	Nestedsets\Model
+	 */
+	public function tree_get_siblings(\Nestedsets\Model $object = null)
+	{
+		is_null($object) and $object = $this;
+
+		// fetch the objects parent
+		$parent = $object->tree_get_parent();
+
+		if ($parent)
+		{
+			// get the children of the parent
+			return $parent->tree_get_children();
+		}
+		else
+		{
+			return null;
+		}
+	}
+
 
 	// -----------------------------------------------------------------
 	// Boolean tree functions
@@ -798,7 +864,8 @@ class Model extends \Orm\Model {
 	 */
 	public function tree_delete_tree($all = false)
 	{
-		$query = $this->find();
+		// delete the tree
+		$query = \DB::delete(call_user_func(__CLASS__.'::table'));
 
 		// if we have multiple roots
 		if ( ! is_null($this->configuration['tree_field']))
@@ -807,13 +874,18 @@ class Model extends \Orm\Model {
 			$all === true or $query->where($this->configuration['tree_field'], $this->{$this->configuration['tree_field']});
 		}
 
-		return $query->delete();
+		$query->execute(call_user_func(__CLASS__.'::connection'));
+
+		// reset the current object, it's no longer valid
+		$this->clear();
+
+		return true;
 	}
 
 	// -----------------------------------------------------------------
 
 	/**
-	 * deletes the current tree node
+	 * deletes the current tree node ( and any child nodes as well ! )
 	 *
 	 * @return	bool
 	 */
@@ -821,16 +893,28 @@ class Model extends \Orm\Model {
 	{
 		if ($this->tree_is_valid($this))
 		{
+			// delete the node(s)
+			$query = \DB::delete(call_user_func(__CLASS__.'::table'));
+
+			// if we have multiple roots
+			if ( ! is_null($this->configuration['tree_field']))
+			{
+				$query->where($this->configuration['tree_field'], $this->{$this->configuration['tree_field']});
+			}
+			$query->where($this->configuration['left_field'], '>=', $this->{$this->configuration['left_field']});
+			$query->where($this->configuration['left_field'], '<=', $this->{$this->configuration['right_field']});
+			$query->execute(call_user_func(__CLASS__.'::connection'));
+
 			// re-index the tree
 			$this->_tree_shift_rlvalues($this->{$this->configuration['right_field']} + 1, $this->{$this->configuration['left_field']} - $this->{$this->configuration['right_field']} - 1);
-
-			// delete the node
-			$this->delete();
 		}
 		else
 		{
 			return false;
 		}
+
+		// reset the current object, it's no longer valid
+		$this->clear();
 
 		return true;
 	}
@@ -843,7 +927,7 @@ class Model extends \Orm\Model {
 	 * returns the tree in a key-value format suitable for html dropdowns
 	 *
 	 */
-	public function tree_dump_dropdown($field = null, $skip_root = false)
+	public function tree_dump_dropdown($field = null, $skip_root = false, $add_empty = false)
 	{
 		// set the name field
 		empty($field) and $field = $this->configuration['title_field'];
@@ -855,12 +939,15 @@ class Model extends \Orm\Model {
 			$result = $this->_tree_dump_as('array', array('id', $field), $skip_root);
 
 			// storage for the dropdown tree
-			$tree = array();
+			$tree = $add_empty ? (is_array($add_empty) ? $add_empty : array('0' => $add_empty)) : array();
 
 			// loop trough the tree
-			foreach ($result as $key => $value)
+			if ($result)
 			{
-				$tree[$value['_key_']] = str_repeat('&nbsp;', ($value['_level_']) * 3) . ($value['_level_'] ? '&raquo; ' : '') . $value[$field];
+				foreach ($result as $key => $value)
+				{
+					$tree[$value['_key_']] = str_repeat('&nbsp;', ($value['_level_']) * 3) . ($value['_level_'] ? '&raquo; ' : '') . $value[$field];
+				}
 			}
 
 			// return the result
@@ -892,12 +979,15 @@ class Model extends \Orm\Model {
 			// storage for the dropdown tree
 			$tree = array();
 
-			// loop trough the tree
-			foreach ($result as $key => $value)
+			if ($result)
 			{
-				if ($value[$this->tree_get_property('right_field')] - $value[$this->tree_get_property('left_field')] > 1)
+				// loop trough the tree
+				foreach ($result as $key => $value)
 				{
-					$tree[$value['_key_']] = str_repeat('&nbsp;', ($value['_level_']) * 3) . ($value['_level_'] ? '&raquo; ' : '') . $value[$field];
+					if ($value[$this->tree_get_property('right_field')] - $value[$this->tree_get_property('left_field')] > 1)
+					{
+						$tree[$value['_key_']] = str_repeat('&nbsp;', ($value['_level_']) * 3) . ($value['_level_'] ? '&raquo; ' : '') . $value[$field];
+					}
 				}
 			}
 

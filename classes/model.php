@@ -705,11 +705,14 @@ class Model extends \Orm\Model {
 	/**
 	 * return the depth of the object in the tree, where the root = 0
 	 *
-	 * @return	mixed	integer, of false in case no valid object was passed
+	 * @param   object Nestedsets\Model
+	 * @return	mixed	integer, of false in case no valid object was found
 	 */
-	public function tree_depth()
+	public function tree_depth(\Nestedsets\Model $object = null)
 	{
-		if ($this->tree_is_valid($this))
+		is_null($object) and $object = $this;
+
+		if ($this->tree_is_valid($object))
 		{
 			$query = $this->find();
 

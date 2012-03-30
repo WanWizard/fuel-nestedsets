@@ -601,7 +601,7 @@ class Model extends \Orm\Model {
 	 */
 	public function tree_is_child()
 	{
-		return $this->tree_is_valid($this) and ! $this->is_root($this);
+		return $this->tree_is_valid($this) and ! $this->tree_is_root($this);
 	}
 
 	// -----------------------------------------------------------------
@@ -647,7 +647,7 @@ class Model extends \Orm\Model {
 	 */
 	public function tree_has_parent()
 	{
-		return $this->is_child($this);
+		return $this->tree_is_child($this);
 	}
 
 	// -----------------------------------------------------------------
@@ -659,7 +659,7 @@ class Model extends \Orm\Model {
 	 */
 	public function tree_has_children()
 	{
-		return $this->is_leaf($this) ? false : true;
+		return $this->tree_is_leaf($this) ? false : true;
 	}
 
 	// -----------------------------------------------------------------
@@ -671,7 +671,7 @@ class Model extends \Orm\Model {
 	 */
 	public function tree_has_previous_sibling()
 	{
-		return ! is_null($this->get_previous_sibling($this));
+		return ! is_null($this->tree_get_previous_sibling($this));
 	}
 
 	// -----------------------------------------------------------------
@@ -683,7 +683,7 @@ class Model extends \Orm\Model {
 	 */
 	public function tree_has_next_sibling()
 	{
-		return ! is_null($this->get_next_sibling($this));
+		return ! is_null($this->tree_get_next_sibling($this));
 	}
 
 	// -----------------------------------------------------------------

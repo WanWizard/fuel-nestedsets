@@ -1,16 +1,16 @@
 <?php
 /**
- * ExiteCMS
+ * NestedSets
  *
- * ExiteCMS is a web application framework,
- * based on the Fuel PHP development framework
+ * NestedSets is a FuelPHP ORM Model extension that introduces nested sets
+ * functionality to the ORM.
  *
- * @package    Themes
+ * @package    Fuel
  * @version    1.0
- * @author     ExiteCMS Development Team
- * @license	   Creative Commons BY-NC-ND-3.0
- * @copyright  2011 ExiteCMS Development Team
- * @link       http://www.exitecms.org
+ * @author     Harro "WanWizard" Verton
+ * @license    MIT License
+ * @copyright  2011-2012 Exite Development Services
+ * @link       http://exite.eu
  */
 
 namespace Nestedsets;
@@ -18,7 +18,7 @@ namespace Nestedsets;
 /*
  * Make sure the ORM package is loaded
  */
-\Fuel::add_package('orm');
+\Package::load('orm');
 
 /**
  * Model class.

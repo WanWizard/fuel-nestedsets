@@ -1005,9 +1005,47 @@ class Model extends \Orm\Model {
 
 	// -----------------------------------------------------------------
 
-	public function tree_dump_as_array(Array $attributes = array(), $skip_root = true)
+	public function tree_dump_as_array(Array $attributes = array(), $skip_root = true, $hierarchical = false)
 	{
-		return $this->_tree_dump_as('array', $attributes, $skip_root);
+		$result = $this->_tree_dump_as('array', $attributes, $skip_root);
+
+		if ($hierarchical)
+		{
+			$tree = array();
+
+			// array to track nodes with children
+			$tracker = array();
+
+			foreach($result as $node)
+			{
+				// add an array for possible childeren of this node
+				$node['children'] = array();
+
+				// do we already track the parent?
+				if (array_key_exists($node['_parent_'], $tracker))
+				{
+					// add the node as a child of the parent
+					$tracker[$node['_parent_']]['children'][$node['id']] = $node;
+
+					// and to the tracker
+					$tracker[$node['id']] =& $tracker[$node['_parent_']]['children'][$node['id']];
+				}
+				else
+				{
+					// no, add it to the tree
+					$tree[$node['id']] = $node;
+
+					// and to the tracker
+					$tracker[$node['id']] =& $tree[$node['id']];
+				}
+			}
+
+			return $tree;
+		}
+		else
+		{
+			return $result;
+		}
 	}
 
 	// -----------------------------------------------------------------

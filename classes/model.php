@@ -49,6 +49,13 @@ class Model extends \Orm\Model {
 	 * --------------------------------------------------------------------------- */
 
 	/**
+	 * flag to log update queries for debugging purposes
+	 *
+	 * @var    array
+	 */
+	protected $_debug_queries = false;
+
+	/**
 	 * tree configuration for this instance
 	 *
 	 * @var    array
@@ -1310,7 +1317,7 @@ class Model extends \Orm\Model {
 		$query->where($this->configuration['left_field'], '>=', $first);
 
 		// set clause
-		$delta = ($delta < 0) ? ('- '.abs($delta)) : ('+ '.$delta);
+		$delta = ($delta < 0) ? (' - '.abs($delta)) : (' + '.$delta);
 		$query->set(array(
 			$this->configuration['left_field'] => \DB::expr($this->configuration['left_field'].$delta),
 		));
@@ -1319,7 +1326,7 @@ class Model extends \Orm\Model {
 		$query->order_by($this->configuration['left_field'], 'DESC');
 
 		// execute it
-		logger('Error', $query->compile());
+		$this->_debug_queries and logger('Debug', $query->compile());
 		$query->execute();
 
 		$query = \DB::update(static::table());
@@ -1333,7 +1340,7 @@ class Model extends \Orm\Model {
 		$query->where($this->configuration['right_field'], '>=', $first);
 
 		// set clause
-		$delta = ($delta < 0) ? ('- '.abs($delta)) : ('+ '.$delta);
+		$delta = ($delta < 0) ? (' - '.abs($delta)) : (' + '.$delta);
 		$query->set(array(
 			$this->configuration['right_field'] => \DB::expr($this->configuration['right_field'].$delta),
 		));
@@ -1342,7 +1349,7 @@ class Model extends \Orm\Model {
 		$query->order_by($this->configuration['right_field'], 'DESC');
 
 		// execute it
-		logger('Error', $query->compile());
+		$this->_debug_queries and logger('Debug', $query->compile());
 		$query->execute();
 
 		// flush cached objects
@@ -1377,7 +1384,7 @@ class Model extends \Orm\Model {
 		$query->order_by($this->configuration['left_field'], 'DESC');
 
 		// execute it
-		logger('Error', $query->compile());
+		$this->_debug_queries and logger('Debug', $query->compile());
 		$query->execute();
 
 		// flush cached objects

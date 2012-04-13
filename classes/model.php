@@ -1140,8 +1140,10 @@ class Model extends \Orm\Model {
 				$level = -2;
 			}
 
+			$query->order_by($this->configuration['left_field'], 'ASC');
+
 			// fetch the result
-			$result = $query->order_by($this->configuration['left_field'], 'ASC')->get();
+			$result = $query->get();
 
 			// create the start of the path
 			$path = ( ! is_null($this->configuration['title_field'])) ? array($this->{$this->configuration['title_field']}) : array();
@@ -1297,8 +1299,7 @@ class Model extends \Orm\Model {
 
 	private function _tree_shift_rlvalues($first, $delta)
 	{
-		// update the left side pointers
-		$query = $this->find();
+		$query = \DB::update(static::table());
 
 		// if we have multiple roots
 		if ( ! is_null($this->configuration['tree_field']))
@@ -1306,20 +1307,22 @@ class Model extends \Orm\Model {
 			$query->where($this->configuration['tree_field'], $this->tree_get_tree_id());
 		}
 
-		// select the range
-		$result = $query->where($this->configuration['left_field'], '>=', $first)->get();
+		$query->where($this->configuration['left_field'], '>=', $first);
 
-		// update the left- and right pointers
-		foreach($result as $key => $record)
-		{
-			$record->{$this->configuration['left_field']} += $delta;
+		// set clause
+		$delta = ($delta < 0) ? ('- '.abs($delta)) : ('+ '.$delta);
+		$query->set(array(
+			$this->configuration['left_field'] => \DB::expr($this->configuration['left_field'].$delta),
+		));
 
-			// and save the record
-			$record->save();
-		}
+		// update back to front
+		$query->order_by($this->configuration['left_field'], 'DESC');
 
-		// update the right side pointers
-		$query = $this->find();
+		// execute it
+		logger('Error', $query->compile());
+		$query->execute();
+
+		$query = \DB::update(static::table());
 
 		// if we have multiple roots
 		if ( ! is_null($this->configuration['tree_field']))
@@ -1327,24 +1330,31 @@ class Model extends \Orm\Model {
 			$query->where($this->configuration['tree_field'], $this->tree_get_tree_id());
 		}
 
-		// select the range
-		$result = $query->where($this->configuration['right_field'], '>=', $first)->get();
+		$query->where($this->configuration['right_field'], '>=', $first);
 
-		// update the left- and right pointers
-		foreach($result as $key => $record)
-		{
-			$record->{$this->configuration['right_field']} += $delta;
+		// set clause
+		$delta = ($delta < 0) ? ('- '.abs($delta)) : ('+ '.$delta);
+		$query->set(array(
+			$this->configuration['right_field'] => \DB::expr($this->configuration['right_field'].$delta),
+		));
 
-			// and save the record
-			$record->save();
-		}
+		// update back to front
+		$query->order_by($this->configuration['right_field'], 'DESC');
+
+		// execute it
+		logger('Error', $query->compile());
+		$query->execute();
+
+		// flush cached objects
+		$class = get_called_class();
+		static::$_cached_objects[$class] = array();
 	}
 
 	// -----------------------------------------------------------------
 
 	private function _tree_shift_rlrange($first, $last, $delta)
 	{
-		$query = $this->find();
+		$query = \DB::update(static::table());
 
 		// if we have multiple roots
 		if ( ! is_null($this->configuration['tree_field']))
@@ -1355,17 +1365,24 @@ class Model extends \Orm\Model {
 		// select the range
 		$query->where($this->configuration['left_field'], '>=', $first);
 		$query->where($this->configuration['right_field'], '<=', $last);
-		$result = $query->get();
 
-		// update the left- and right pointers
-		foreach($result as $key => $record)
-		{
-			$record->{$this->configuration['left_field']} += $delta;
-			$record->{$this->configuration['right_field']} += $delta;
+		// set clause
+		$delta = ($delta < 0) ? ('- '.abs($delta)) : ('+ '.$delta);
+		$query->set(array(
+			$this->configuration['left_field'] => \DB::expr($this->configuration['left_field'].$delta),
+			$this->configuration['right_field'] => \DB::expr($this->configuration['right_field'].$delta),
+		));
 
-			// and save the record
-			$record->save();
-		}
+		// update back to front
+		$query->order_by($this->configuration['left_field'], 'DESC');
+
+		// execute it
+		logger('Error', $query->compile());
+		$query->execute();
+
+		// flush cached objects
+		$class = get_called_class();
+		static::$_cached_objects[$class] = array();
 	}
 
 	// -----------------------------------------------------------------

@@ -887,7 +887,7 @@ class Model extends \Orm\Model {
 		$query->execute(call_user_func(__CLASS__.'::connection'));
 
 		// reset the current object, it's no longer valid
-		$this->clear();
+		$this->tree_clear();
 
 		return true;
 	}
@@ -924,7 +924,7 @@ class Model extends \Orm\Model {
 		}
 
 		// reset the current object, it's no longer valid
-		$this->clear();
+		$this->tree_clear();
 
 		return true;
 	}
@@ -1076,18 +1076,6 @@ class Model extends \Orm\Model {
 		return $this->_tree_dump_as('tab', $attributes, $skip_root);
 	}
 
-	/* -------------------------------------------------------------------------
-	 * private class functions
-	 * ---------------------------------------------------------------------- */
-
-	private function tree_validate_model($object, $method)
-	{
-		if (get_class($object) !== get_class($this))
-		{
-			throw new \Exception('Model object passed to '.$method.'() is not an instance of '.get_class($this).'.');
-		}
-	}
-
 	// -----------------------------------------------------------------
 
 	/**
@@ -1109,6 +1097,18 @@ class Model extends \Orm\Model {
 		}
 	}
 
+	/* -------------------------------------------------------------------------
+	 * protected class functions
+	 * ---------------------------------------------------------------------- */
+
+	protected function tree_validate_model($object, $method)
+	{
+		if (get_class($object) !== get_class($this))
+		{
+			throw new \Exception('Model object passed to '.$method.'() is not an instance of '.get_class($this).'.');
+		}
+	}
+
 	// -----------------------------------------------------------------
 
 	/**
@@ -1119,7 +1119,7 @@ class Model extends \Orm\Model {
 	 * @param	boolean	if true, the object itself (root of the dump) will not be included
 	 * @return	mixed
 	 */
-	private function _tree_dump_as($type, $attributes, $skip_root)
+	protected function _tree_dump_as($type, $attributes, $skip_root)
 	{
 		if ($this->tree_is_valid($this))
 		{
@@ -1304,7 +1304,7 @@ class Model extends \Orm\Model {
 
 	// -----------------------------------------------------------------
 
-	private function _tree_shift_rlvalues($first, $delta)
+	protected function _tree_shift_rlvalues($first, $delta)
 	{
 		$query = \DB::update(static::table());
 
@@ -1359,7 +1359,7 @@ class Model extends \Orm\Model {
 
 	// -----------------------------------------------------------------
 
-	private function _tree_shift_rlrange($first, $last, $delta)
+	protected function _tree_shift_rlrange($first, $last, $delta)
 	{
 		$query = \DB::update(static::table());
 
@@ -1394,7 +1394,7 @@ class Model extends \Orm\Model {
 
 	// -----------------------------------------------------------------
 
-	private function _tree_move_subtree($destination_id)
+	protected function _tree_move_subtree($destination_id)
 	{
 		// catch a recursive move
 		if ( $destination_id >= $this->{$this->configuration['left_field']} and $destination_id <= $this->{$this->configuration['right_field']} )
@@ -1429,6 +1429,26 @@ class Model extends \Orm\Model {
 		// return the moved object
 		return $this;
 	}
+
+	// -----------------------------------------------------------------
+
+	protected function tree_clear()
+	{
+		// Perform cleanup:
+		// remove from internal object cache, remove PK's, set to non saved object, remove db original values
+		if (array_key_exists(get_called_class(), static::$_cached_objects)
+			and array_key_exists(static::implode_pk($this), static::$_cached_objects[get_called_class()]))
+		{
+			unset(static::$_cached_objects[get_called_class()][static::implode_pk($this)]);
+		}
+		foreach ($this->primary_key() as $pk)
+		{
+			unset($this->_data[$pk]);
+		}
+		$this->_is_new = true;
+		$this->_original = array();
+	}
+
 }
 
 /* End of file model.php */

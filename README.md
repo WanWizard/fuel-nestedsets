@@ -120,3 +120,12 @@ Available methods
 	public function tree_dump_as_csv(Array $attributes = array(), $skip_root = true)
 	public function tree_dump_as_tab(Array $attributes = array(), $skip_root = true)
 	public function tree_get_tree_id()
+
+Method documentation
+--------------------
+
+Currently, there is no documentation available.
+
+However, the same methods are available in my nested sets extension for Datamapper, an ORM for CodeIgniter.
+
+You can find the documentation for that extension here: http://datamapper.wanwizard.eu/pages/extensions/nestedsets.html

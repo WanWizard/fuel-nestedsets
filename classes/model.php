@@ -71,6 +71,14 @@ class Model extends \Orm\Model {
 	private $readonly_fields = array(
 	);
 
+	/**
+	 * related objects to include in a query
+	 *
+	 * @var    array
+	 */
+	private $relations = array(
+	);
+
 	// -------------------------------------------------------------------------
 
 	/*
@@ -270,12 +278,12 @@ class Model extends \Orm\Model {
 	// -----------------------------------------------------------------
 
 	/**
-	 * create a new tree node as new next sibling of object
+	 * create a new tree node as new previous sibling of object
 	 *
 	 * @param	object	Nestedsets\Model
 	 * @return	mixed
 	 */
-	public function tree_new_next_sibling_of(\Nestedsets\Model $object)
+	public function tree_new_previous_sibling_of(\Nestedsets\Model $object)
 	{
 		$this->tree_validate_model($object, __METHOD__);
 
@@ -299,12 +307,12 @@ class Model extends \Orm\Model {
 	// -----------------------------------------------------------------
 
 	/**
-	 * create a new tree node as new previous sibling of object
+	 * create a new tree node as new next sibling of object
 	 *
 	 * @param	object	Nestedsets\Model
 	 * @return	mixed
 	 */
-	public function tree_new_previous_sibling_of(\Nestedsets\Model $object)
+	public function tree_new_next_sibling_of(\Nestedsets\Model $object)
 	{
 		$this->tree_validate_model($object, __METHOD__);
 
@@ -344,7 +352,25 @@ class Model extends \Orm\Model {
 		}
 
 		// return the ORM Model object
-		return $query->get_one();
+		return $this->_get_one($query);
+	}
+
+	/**
+	 * Returns a query object on the selected tree
+	 *
+	 * @return	object	Nestedsets\Model
+	 */
+	public function tree_get_query()
+	{
+		$query = $this->find()->where('id', 1);
+
+		if ( ! is_null($this->configuration['tree_field']))
+		{
+			$query->where($this->configuration['tree_field'], $this->tree_get_tree_id());
+		}
+
+		// return the ORM query object
+		return $query;
 	}
 
 	// -----------------------------------------------------------------
@@ -372,7 +398,7 @@ class Model extends \Orm\Model {
 		}
 
 		// return the Nestedsets Model object
-		return $query->get_one();
+		return $this->_get_one($query);
 	}
 
 	// -----------------------------------------------------------------
@@ -398,7 +424,7 @@ class Model extends \Orm\Model {
 		}
 
 		// return the Nestedsets Model object
-		return $query->get_one();
+		return $this->_get_one($query);
 	}
 
 	// -----------------------------------------------------------------
@@ -424,7 +450,7 @@ class Model extends \Orm\Model {
 		}
 
 		// return the Nestedsets Model object
-		return $query->get_one();
+		return $this->_get_one($query);
 	}
 
 	// -----------------------------------------------------------------
@@ -479,7 +505,7 @@ class Model extends \Orm\Model {
 		}
 
 		// return the Nestedsets Model object
-		return $query->get_one();
+		return $this->_get_one($query);
 	}
 
 	// -----------------------------------------------------------------
@@ -505,7 +531,7 @@ class Model extends \Orm\Model {
 		}
 
 		// return the Nestedsets Model object
-		return $query->get_one();
+		return $this->_get_one($query);
 	}
 
 	// -----------------------------------------------------------------
@@ -1101,12 +1127,60 @@ class Model extends \Orm\Model {
 	 * protected class functions
 	 * ---------------------------------------------------------------------- */
 
+	/**
+	 * check if the object passed is an instance of the current model
+	 */
 	protected function tree_validate_model($object, $method)
 	{
 		if (get_class($object) !== get_class($this))
 		{
 			throw new \Exception('Model object passed to '.$method.'() is not an instance of '.get_class($this).'.');
 		}
+	}
+
+	// -----------------------------------------------------------------
+
+	public function related($relation)
+	{
+		in_array($relation, $this->relations) or $this->relations[] = $relation;
+
+		return $this;
+	}
+
+	// -----------------------------------------------------------------
+
+	/**
+	 * runs a get() query
+	 */
+	protected function _get($query)
+	{
+		// inject defined relations in the query
+		foreach ($this->relations as $relation)
+		{
+			$query->related($relation);
+		}
+		$this->relations = array();
+
+		// return the query result
+		return $query->get();
+	}
+
+	// -----------------------------------------------------------------
+
+	/**
+	 * runs a get_one() query
+	 */
+	protected function _get_one($query)
+	{
+		// inject defined relations in the query
+		foreach ($this->relations as $relation)
+		{
+			$query->related($relation);
+		}
+		$this->relations = array();
+
+		// return the query result
+		return $query->get_one();
 	}
 
 	// -----------------------------------------------------------------
@@ -1150,7 +1224,7 @@ class Model extends \Orm\Model {
 			$query->order_by($this->configuration['left_field'], 'ASC');
 
 			// fetch the result
-			$result = $query->get();
+			$result = $this->_get($query);
 
 			// create the start of the path
 			$path = ( ! is_null($this->configuration['title_field'])) ? array($this->{$this->configuration['title_field']}) : array();

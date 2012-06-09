@@ -1390,14 +1390,16 @@ class Model extends \Orm\Model {
 
 		$query->where($this->configuration['left_field'], '>=', $first);
 
+		// correct the delta
+		$sqldelta = ($delta < 0) ? (' - '.abs($delta)) : (' + '.$delta);
+
 		// set clause
-		$delta = ($delta < 0) ? (' - '.abs($delta)) : (' + '.$delta);
 		$query->set(array(
-			$this->configuration['left_field'] => \DB::expr($this->configuration['left_field'].$delta),
+			$this->configuration['left_field'] => \DB::expr($this->configuration['left_field'].$sqldelta),
 		));
 
-		// update back to front
-		$query->order_by($this->configuration['left_field'], 'DESC');
+		// update in the correct order to avoid constraint conflicts
+		$query->order_by($this->configuration['left_field'], ($delta < 0 ? 'ASC' : 'DESC'));
 
 		// execute it
 		$this->_debug_queries and logger('Debug', $query->compile());
@@ -1414,13 +1416,12 @@ class Model extends \Orm\Model {
 		$query->where($this->configuration['right_field'], '>=', $first);
 
 		// set clause
-		$delta = ($delta < 0) ? (' - '.abs($delta)) : (' + '.$delta);
 		$query->set(array(
-			$this->configuration['right_field'] => \DB::expr($this->configuration['right_field'].$delta),
+			$this->configuration['right_field'] => \DB::expr($this->configuration['right_field'].$sqldelta),
 		));
 
-		// update back to front
-		$query->order_by($this->configuration['right_field'], 'DESC');
+		// update in the correct order to avoid constraint conflicts
+		$query->order_by($this->configuration['right_field'], ($delta < 0 ? 'ASC' : 'DESC'));
 
 		// execute it
 		$this->_debug_queries and logger('Debug', $query->compile());
@@ -1498,7 +1499,7 @@ class Model extends \Orm\Model {
 		$this->_tree_shift_rlrange($left_id, $right_id, $destination_id - $left_id);
 
 		// and correct index values after the source
-		$this->_tree_shift_rlvalues($right_id + 1, - $treesize);
+		$this->_tree_shift_rlvalues(++$right_id, (-1 * $treesize));
 
 		// return the moved object
 		return $this;

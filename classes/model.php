@@ -227,7 +227,7 @@ class Model extends \Orm\Model {
 	 */
 	public function tree_new_first_child_of(\Nestedsets\Model $object)
 	{
-		$this->tree_validate_model($object, __METHOD__);
+		$this->tree_same_model_as($object, __METHOD__);
 
 		// set the tree id
 		if ( ! is_null($this->configuration['tree_field']))
@@ -256,7 +256,7 @@ class Model extends \Orm\Model {
 	 */
 	public function tree_new_last_child_of(\Nestedsets\Model $object)
 	{
-		$this->tree_validate_model($object, __METHOD__);
+		$this->tree_same_model_as($object, __METHOD__);
 
 		// set the tree id
 		if ( ! is_null($this->configuration['tree_field']))
@@ -285,7 +285,7 @@ class Model extends \Orm\Model {
 	 */
 	public function tree_new_previous_sibling_of(\Nestedsets\Model $object)
 	{
-		$this->tree_validate_model($object, __METHOD__);
+		$this->tree_same_model_as($object, __METHOD__);
 
 		// set the tree id
 		if ( ! is_null($this->configuration['tree_field']))
@@ -314,7 +314,7 @@ class Model extends \Orm\Model {
 	 */
 	public function tree_new_next_sibling_of(\Nestedsets\Model $object)
 	{
-		$this->tree_validate_model($object, __METHOD__);
+		$this->tree_same_model_as($object, __METHOD__);
 
 		// set the tree id
 		if ( ! is_null($this->configuration['tree_field']))
@@ -385,7 +385,7 @@ class Model extends \Orm\Model {
 	{
 		is_null($object) and $object = $this;
 
-		$this->tree_validate_model($object, __METHOD__);
+		$this->tree_same_model_as($object, __METHOD__);
 
 		$query = $this->find()
 			->where($this->configuration['left_field'], '<', $object->{$this->configuration['left_field']})
@@ -413,7 +413,7 @@ class Model extends \Orm\Model {
 	{
 		is_null($object) and $object = $this;
 
-		$this->tree_validate_model($object, __METHOD__);
+		$this->tree_same_model_as($object, __METHOD__);
 
 		$query = $this->find()
 			->where($this->configuration['left_field'], $object->{$this->configuration['left_field']} + 1);
@@ -439,7 +439,7 @@ class Model extends \Orm\Model {
 	{
 		is_null($object) and $object = $this;
 
-		$this->tree_validate_model($object, __METHOD__);
+		$this->tree_same_model_as($object, __METHOD__);
 
 		$query = $this->find()
 			->where($this->configuration['right_field'], $object->{$this->configuration['right_field']} - 1);
@@ -494,7 +494,7 @@ class Model extends \Orm\Model {
 	{
 		is_null($object) and $object = $this;
 
-		$this->tree_validate_model($object, __METHOD__);
+		$this->tree_same_model_as($object, __METHOD__);
 
 		$query = $this->find()
 			->where($this->configuration['right_field'], $object->{$this->configuration['left_field']} - 1);
@@ -520,7 +520,7 @@ class Model extends \Orm\Model {
 	{
 		is_null($object) and $object = $this;
 
-		$this->tree_validate_model($object, __METHOD__);
+		$this->tree_same_model_as($object, __METHOD__);
 
 		$query = $this->find()
 			->where($this->configuration['left_field'], $object->{$this->configuration['right_field']} + 1);
@@ -778,7 +778,7 @@ class Model extends \Orm\Model {
 	 */
 	public function tree_make_next_sibling_of(\Nestedsets\Model $to)
 	{
-		$this->tree_validate_model($to, __METHOD__);
+		$this->tree_same_model_as($to, __METHOD__);
 
 		if ($this->tree_is_valid($this) and $this->tree_is_valid($to))
 		{
@@ -808,7 +808,7 @@ class Model extends \Orm\Model {
 	 */
 	public function tree_make_previous_sibling_of(\Nestedsets\Model $to)
 	{
-		$this->tree_validate_model($to, __METHOD__);
+		$this->tree_same_model_as($to, __METHOD__);
 
 		if ($this->tree_is_valid($this) and $this->tree_is_valid($to))
 		{
@@ -838,7 +838,7 @@ class Model extends \Orm\Model {
 	 */
 	public function tree_make_first_child_of(\Nestedsets\Model $to)
 	{
-		$this->tree_validate_model($to, __METHOD__);
+		$this->tree_same_model_as($to, __METHOD__);
 
 		if ($this->tree_is_valid($this) and $this->tree_is_valid($to))
 		{
@@ -868,7 +868,7 @@ class Model extends \Orm\Model {
 	 */
 	public function tree_make_last_child_of(\Nestedsets\Model $to)
 	{
-		$this->tree_validate_model($to, __METHOD__);
+		$this->tree_same_model_as($to, __METHOD__);
 
 		if ($this->tree_is_valid($this) and $this->tree_is_valid($to))
 		{
@@ -1123,19 +1123,50 @@ class Model extends \Orm\Model {
 		}
 	}
 
-	/* -------------------------------------------------------------------------
-	 * protected class functions
-	 * ---------------------------------------------------------------------- */
+	// -----------------------------------------------------------------
 
 	/**
 	 * check if the object passed is an instance of the current model
+	 *
+	 * @param   object	Nestedsets\Model
+	 * @param	string	optional method name to display in the exception
+	 * @return  bool
+	 * @throws	Exception in case the two objects are not part of the same model
 	 */
-	protected function tree_validate_model($object, $method)
+	public function tree_same_model_as($object, $method = 'unknown')
 	{
 		if (get_class($object) !== get_class($this))
 		{
 			throw new \Exception('Model object passed to '.$method.'() is not an instance of '.get_class($this).'.');
 		}
+
+		return true;
+	}
+
+	// -----------------------------------------------------------------
+
+	/**
+	 * check if the object passed is an instance of the current model
+	 *
+	 * @param   object	Nestedsets\Model
+	 * @param	string	optional method name to display in the exception
+	 * @return  bool
+	 * @throws	Exception in case the two objects are not part of the same model
+	 */
+	public function tree_same_tree_as($object, $method = 'unknown')
+	{
+		// make sure they're the same model
+		$this->tree_same_model_as($object, $method);
+
+		if ( ! empty($this->{$this->configuration['tree_field']}))
+		{
+			if ($this->{$this->configuration['tree_field']} !== $object->{$this->configuration['tree_field']})
+			{
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	// -----------------------------------------------------------------
@@ -1147,7 +1178,9 @@ class Model extends \Orm\Model {
 		return $this;
 	}
 
-	// -----------------------------------------------------------------
+	/* -------------------------------------------------------------------------
+	 * protected class functions
+	 * ---------------------------------------------------------------------- */
 
 	/**
 	 * runs a get() query

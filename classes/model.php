@@ -482,6 +482,49 @@ class Model extends \Orm\Model {
 		}
 	}
 
+
+	/**
+	 * returns all descendants of the object passed.
+	 *
+	 * @param   object Nestedsets\Model
+	 * @return	array	Nestedsets\Model
+	 */
+	public function tree_get_descendants(\Nestedsets\Model $object = null)
+	{
+		is_null($object) and $object = $this;
+
+		$lf = $this->configuration['left_field'];
+		$rf = $this->configuration['right_field'];
+
+		$query = $this->find()
+			->where($lf, '>', $this->$lf)
+			->where($rf, '<', $this->$rf)
+			->get();
+
+		return $query;
+	}
+
+	/**
+	 * returns all leafs of the tree passed.
+	 *
+	 * @param   object Nestedsets\Model
+	 * @return	array	Nestedsets\Model
+	 */
+	public function tree_get_leaf_descendants(\Nestedsets\Model $object = null)
+	{
+		is_null($object) and $object = $this;
+
+		$lf = $this->configuration['left_field'];
+		$rf = $this->configuration['right_field'];
+
+		$query = $this->find()
+			->where($lf, '>', $this->$lf)
+			->where($rf, '<', $this->$rf)
+			->where(\DB::expr(\DB::quote_identifier($rf) . ' - ' . \DB::quote_identifier($lf)), '=', 1)
+			->get();
+
+		return $query;
+	}
 	// -----------------------------------------------------------------
 
 	/**

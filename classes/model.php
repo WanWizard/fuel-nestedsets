@@ -1471,7 +1471,7 @@ class Model extends \Orm\Model {
 
 		// set clause
 		$query->set(array(
-			$this->configuration['left_field'] => \DB::expr($this->configuration['left_field'].$sqldelta),
+			$this->configuration['left_field'] => \DB::expr(\DB::quote_identifier($this->configuration['left_field']).$sqldelta),
 		));
 
 		// update in the correct order to avoid constraint conflicts
@@ -1493,7 +1493,7 @@ class Model extends \Orm\Model {
 
 		// set clause
 		$query->set(array(
-			$this->configuration['right_field'] => \DB::expr($this->configuration['right_field'].$sqldelta),
+			$this->configuration['right_field'] => \DB::expr(\DB::quote_identifier($this->configuration['right_field']).$sqldelta),
 		));
 
 		// update in the correct order to avoid constraint conflicts

@@ -1527,8 +1527,8 @@ class Model extends \Orm\Model {
 		// set clause
 		$delta = ($delta < 0) ? ('- '.abs($delta)) : ('+ '.$delta);
 		$query->set(array(
-			$this->configuration['left_field'] => \DB::expr($this->configuration['left_field'].$delta),
-			$this->configuration['right_field'] => \DB::expr($this->configuration['right_field'].$delta),
+			$this->configuration['left_field'] => \DB::expr(\DB::quote_identifier($this->configuration['left_field']).$delta),
+			$this->configuration['right_field'] => \DB::expr(\DB::quote_identifier($this->configuration['right_field']).$delta),
 		));
 
 		// update back to front

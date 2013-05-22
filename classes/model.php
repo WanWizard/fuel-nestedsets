@@ -1264,8 +1264,8 @@ class Model extends \Orm\Model {
 		}
 		$this->relations = array();
 
-		// return the query result
-		return $query->get_one();
+		// ORM's get_one is broken when using relations.
+		return current($query->get());
 	}
 
 	// -----------------------------------------------------------------

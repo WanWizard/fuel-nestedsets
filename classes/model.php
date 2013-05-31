@@ -486,6 +486,10 @@ class Model extends \Orm\Model {
 		$ids = $query->execute()
 			->as_array();
 
+		if (! $ids) {
+			return [];
+		}
+
 		return static::query()
 			->where('id', 'in', $ids)
 			->get();

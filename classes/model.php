@@ -344,7 +344,7 @@ class Model extends \Orm\Model {
 	 */
 	public function tree_get_root()
 	{
-		$query = $this->find()->where($this->configuration['left_field'], 1);
+		$query = $this->query()->where($this->configuration['left_field'], 1);
 
 		if ( ! is_null($this->configuration['tree_field']))
 		{
@@ -362,7 +362,7 @@ class Model extends \Orm\Model {
 	 */
 	public function tree_get_query()
 	{
-		$query = $this->find()->where('id', 1);
+		$query = $this->query()->where('id', 1);
 
 		if ( ! is_null($this->configuration['tree_field']))
 		{
@@ -387,7 +387,7 @@ class Model extends \Orm\Model {
 
 		$this->tree_same_model_as($object, __METHOD__);
 
-		$query = $this->find()
+		$query = $this->query()
 			->where($this->configuration['left_field'], '<', $object->{$this->configuration['left_field']})
 			->where($this->configuration['right_field'], '>', $object->{$this->configuration['right_field']})
 			->order_by($this->configuration['right_field'], 'ASC');
@@ -415,7 +415,7 @@ class Model extends \Orm\Model {
 
 		$this->tree_same_model_as($object, __METHOD__);
 
-		$query = $this->find()
+		$query = $this->query()
 			->where($this->configuration['left_field'], $object->{$this->configuration['left_field']} + 1);
 
 		if ( ! is_null($this->configuration['tree_field']))
@@ -441,7 +441,7 @@ class Model extends \Orm\Model {
 
 		$this->tree_same_model_as($object, __METHOD__);
 
-		$query = $this->find()
+		$query = $this->query()
 			->where($this->configuration['right_field'], $object->{$this->configuration['right_field']} - 1);
 
 		if ( ! is_null($this->configuration['tree_field']))
@@ -509,7 +509,7 @@ class Model extends \Orm\Model {
 		$lf = $this->configuration['left_field'];
 		$rf = $this->configuration['right_field'];
 
-		$query = $this->find()
+		$query = $this->query()
 			->where($lf, '>', $this->$lf)
 			->where($rf, '<', $this->$rf)
 			->get();
@@ -530,7 +530,7 @@ class Model extends \Orm\Model {
 		$lf = $this->configuration['left_field'];
 		$rf = $this->configuration['right_field'];
 
-		$query = $this->find()
+		$query = $this->query()
 			->where($lf, '>', $this->$lf)
 			->where($rf, '<', $this->$rf)
 			->where(\DB::expr(\DB::quote_identifier($rf) . ' - ' . \DB::quote_identifier($lf)), '=', 1)
@@ -552,7 +552,7 @@ class Model extends \Orm\Model {
 
 		$this->tree_same_model_as($object, __METHOD__);
 
-		$query = $this->find()
+		$query = $this->query()
 			->where($this->configuration['right_field'], $object->{$this->configuration['left_field']} - 1);
 
 		if ( ! is_null($this->configuration['tree_field']))
@@ -578,7 +578,7 @@ class Model extends \Orm\Model {
 
 		$this->tree_same_model_as($object, __METHOD__);
 
-		$query = $this->find()
+		$query = $this->query()
 			->where($this->configuration['left_field'], $object->{$this->configuration['right_field']} + 1);
 
 		if ( ! is_null($this->configuration['tree_field']))
@@ -803,7 +803,7 @@ class Model extends \Orm\Model {
 
 		if ($this->tree_is_valid($object))
 		{
-			$query = $this->find();
+			$query = $this->query();
 
 			if ( ! is_null($this->configuration['tree_field']))
 			{
@@ -1286,7 +1286,7 @@ class Model extends \Orm\Model {
 	{
 		if ($this->tree_is_valid($this))
 		{
-			$query = $this->find();
+			$query = $this->query();
 
 			// if we have multiple roots
 			if ( ! is_null($this->configuration['tree_field']))

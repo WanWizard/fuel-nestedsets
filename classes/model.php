@@ -465,23 +465,79 @@ class Model extends \Orm\Model {
 	{
 		is_null($object) and $object = $this;
 
-		if ($child = $object->tree_get_first_child())
-		{
-			$result = array($child->id => $child);
-			while ($child = $child->tree_get_next_sibling())
-			{
-				$result[$child->id] = $child;
-			}
+		$lf = $this->configuration['left_field'];
+		$rf = $this->configuration['right_field'];
+		$left = $object->{$lf};
+		$right = $object->{$rf};
 
-			// return the array of Nestedsets Model objects
-			return $result;
-		}
-		else
+		$query = \DB::select('child.id')
+			->from([static::table(), 'child'])
+			->join([static::table(), 'ancestor'], 'left')
+			->on('ancestor.' . $lf, 'BETWEEN', \DB::expr(($left + 1) . ' AND ' . ($right - 1)))
+			->on('child.' . $lf, 'BETWEEN', \DB::expr('ancestor.left + 1 AND ancestor.right - 1'))
+			->where('child.' . $lf, 'BETWEEN', \DB::expr(($left + 1) . ' AND ' . ($right - 1)))
+			->and_where('ancestor.id', null);
+
+		if ( ! is_null($this->configuration['tree_field']))
 		{
-			return null;
+			$query->where($this->configuration['tree_field'], $this->tree_get_tree_id());
 		}
+
+		$ids = $query->execute()
+			->as_array();
+
+		if (! $ids) {
+			return [];
+		}
+
+		return static::query()
+			->where('id', 'in', $ids)
+			->get();
 	}
 
+
+	/**
+	 * returns all descendants of the object passed.
+	 *
+	 * @param   object Nestedsets\Model
+	 * @return	array	Nestedsets\Model
+	 */
+	public function tree_get_descendants(\Nestedsets\Model $object = null)
+	{
+		is_null($object) and $object = $this;
+
+		$lf = $this->configuration['left_field'];
+		$rf = $this->configuration['right_field'];
+
+		$query = $this->query()
+			->where($lf, '>', $this->$lf)
+			->where($rf, '<', $this->$rf)
+			->get();
+
+		return $query;
+	}
+
+	/**
+	 * returns all leafs of the tree passed.
+	 *
+	 * @param   object Nestedsets\Model
+	 * @return	array	Nestedsets\Model
+	 */
+	public function tree_get_leaf_descendants(\Nestedsets\Model $object = null)
+	{
+		is_null($object) and $object = $this;
+
+		$lf = $this->configuration['left_field'];
+		$rf = $this->configuration['right_field'];
+
+		$query = $this->query()
+			->where($lf, '>', $this->$lf)
+			->where($rf, '<', $this->$rf)
+			->where(\DB::expr(\DB::quote_identifier($rf) . ' - ' . \DB::quote_identifier($lf)), '=', 1)
+			->get();
+
+		return $query;
+	}
 	// -----------------------------------------------------------------
 
 	/**
@@ -1212,8 +1268,8 @@ class Model extends \Orm\Model {
 		}
 		$this->relations = array();
 
-		// return the query result
-		return $query->get_one();
+		// ORM's get_one is broken when using relations.
+		return current($query->get());
 	}
 
 	// -----------------------------------------------------------------
@@ -1428,7 +1484,7 @@ class Model extends \Orm\Model {
 
 		// set clause
 		$query->set(array(
-			$this->configuration['left_field'] => \DB::expr($this->configuration['left_field'].$sqldelta),
+			$this->configuration['left_field'] => \DB::expr(\DB::quote_identifier($this->configuration['left_field']).$sqldelta),
 		));
 
 		// update in the correct order to avoid constraint conflicts
@@ -1450,7 +1506,7 @@ class Model extends \Orm\Model {
 
 		// set clause
 		$query->set(array(
-			$this->configuration['right_field'] => \DB::expr($this->configuration['right_field'].$sqldelta),
+			$this->configuration['right_field'] => \DB::expr(\DB::quote_identifier($this->configuration['right_field']).$sqldelta),
 		));
 
 		// update in the correct order to avoid constraint conflicts
@@ -1484,8 +1540,8 @@ class Model extends \Orm\Model {
 		// set clause
 		$delta = ($delta < 0) ? ('- '.abs($delta)) : ('+ '.$delta);
 		$query->set(array(
-			$this->configuration['left_field'] => \DB::expr($this->configuration['left_field'].$delta),
-			$this->configuration['right_field'] => \DB::expr($this->configuration['right_field'].$delta),
+			$this->configuration['left_field'] => \DB::expr(\DB::quote_identifier($this->configuration['left_field']).$delta),
+			$this->configuration['right_field'] => \DB::expr(\DB::quote_identifier($this->configuration['right_field']).$delta),
 		));
 
 		// update back to front
